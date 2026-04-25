@@ -646,7 +646,10 @@ body::before {
   .section { padding: 16px; }
   .tables-grid { grid-template-columns: 1fr; }
   .match-controls { flex-direction: column; }
-  .btn { width: 100%; text-align: center; }
+  .match-controls .btn { width: 100%; text-align: center; }
+  .input-row { flex-wrap: nowrap; }
+  .input-row input { min-width: 0; }
+  .input-row .btn { width: auto; flex-shrink: 0; }
 }
 </style>
 </head>
