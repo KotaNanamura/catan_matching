@@ -737,6 +737,42 @@ let timerRemaining = 68 * 60;
 let timerInterval = null;
 let timerRunning = false;
 
+// ── LocalStorage 保存・復元 ──
+const STORAGE_KEY = 'catan_matcher_data';
+
+function saveState() {
+  try {
+    const data = {
+      players,
+      nextId,
+      tables,
+      waiting,
+      pairHistory,
+      timerTotal,
+      timerRemaining,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.players) players = data.players;
+    if (data.nextId) nextId = data.nextId;
+    if (data.tables) tables = data.tables;
+    if (data.waiting) waiting = data.waiting;
+    if (data.pairHistory) pairHistory = data.pairHistory;
+    if (data.timerTotal) timerTotal = data.timerTotal;
+    if (data.timerRemaining != null) timerRemaining = data.timerRemaining;
+  } catch(e) {}
+}
+
+// 起動時に復元
+loadState();
+
 // ── Audio context for notification ──
 function playBeep(frequency = 880, duration = 200, count = 3) {
   try {
@@ -779,6 +815,7 @@ function addPlayer() {
   input.value = '';
   input.focus();
   renderPlayers();
+  saveState();
   showToast(`${name} を追加しました`);
 }
 
@@ -791,6 +828,7 @@ function toggleActive(id) {
   if (p) {
     p.active = !p.active;
     renderPlayers();
+    saveState();
   }
 }
 
@@ -800,6 +838,7 @@ function deletePlayer(id) {
     const name = p.name;
     players = players.filter(p => p.id !== id);
     renderPlayers();
+    saveState();
     showToast(`${name} を削除しました`);
   }
 }
@@ -973,6 +1012,7 @@ function matchPlayers() {
   const newCount = newTables.length;
   const waitMsg = waiting.length > 0 ? `（待機 ${waiting.length}名）` : '';
   const historyMsg = bestScore === 0 ? '' : '（※一部重複あり）';
+  saveState();
   showToast(`${newCount} 卓を振り分けました${waitMsg}${historyMsg}`);
 }
 
@@ -980,10 +1020,12 @@ function clearMatch() {
   tables = [];
   waiting = [];
   document.getElementById('tablesGrid').innerHTML = '';
+  saveState();
 }
 
 function resetHistory() {
   pairHistory = {};
+  saveState();
   showToast('対戦履歴をリセットしました');
 }
 
@@ -993,6 +1035,7 @@ function toggleLock(tableIdx) {
     target.locked = !target.locked;
     tables.sort((a, b) => a.name.localeCompare(b.name));
     renderTables();
+    saveState();
     showToast(target.locked ? `${target.name} を固定しました` : `${target.name} の固定を解除しました`);
   }
 }
@@ -1093,6 +1136,7 @@ function startTimer() {
   timerInterval = setInterval(() => {
     timerRemaining--;
     updateTimerDisplay();
+    saveState();
 
     if (timerRemaining === 300 && !notified5) {
       notified5 = true;
@@ -1122,6 +1166,7 @@ function pauseTimer() {
   document.getElementById('timerStartBtn').textContent = '再開';
   document.getElementById('timerStartBtn').classList.remove('btn-danger');
   document.getElementById('timerStartBtn').classList.add('btn-primary');
+  saveState();
 }
 
 function resetTimer() {
@@ -1134,6 +1179,7 @@ function resetTimer() {
   document.getElementById('timerStartBtn').textContent = 'スタート';
   document.getElementById('timerStartBtn').classList.remove('btn-danger');
   document.getElementById('timerStartBtn').classList.add('btn-primary');
+  saveState();
 }
 
 function setTimerMinutes() {
@@ -1142,10 +1188,13 @@ function setTimerMinutes() {
   timerTotal = mins * 60;
   timerRemaining = timerTotal;
   updateTimerDisplay();
+  saveState();
 }
 
-// Initial render
+// Initial render (復元データを反映)
 renderPlayers();
+renderTables();
+document.getElementById('timerMinutes').value = Math.round(timerTotal / 60);
 updateTimerDisplay();
 </script>
 </body>
